@@ -1,0 +1,16 @@
+{
+  "name": "main-page",
+  "version": "1.0.0",
+  "description": "W3TIGERDOG Render Live Dashboard",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
