@@ -1,119 +1,289 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>W3TIGERDOG · Web3 Home</title>
-  <meta name="description" content="W3TIGERDOG Web3 风格主页：实时币价、Google 搜索、全球时区时钟" />
+  <title>W3TIGERDOG · Web3 Neon Dashboard</title>
+  <meta name="description" content="W3TIGERDOG Web3 Neon Dashboard: live crypto prices, Google search, and world timezones." />
+
+  <!-- Helps reduce stale caching on some networks/CDNs -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
   <style>
     :root{
-      --bg:#070A12;
-      --panel: rgba(255,255,255,.03);
-      --panel2: rgba(255,255,255,.05);
-      --line: rgba(255,255,255,.10);
-      --text:#EAF0FF;
+      --bg:#050711;
+      --panel: rgba(255,255,255,.035);
+      --panel2: rgba(255,255,255,.055);
+      --line: rgba(255,255,255,.11);
+      --text:#ECF2FF;
       --muted:#9FB0D0;
 
       --neon1:#22d3ee; /* cyan */
       --neon2:#a78bfa; /* purple */
       --neon3:#34d399; /* green */
+      --neon4:#fb7185; /* pink */
       --warn:#fbbf24;
 
-      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --shadow: 0 24px 85px rgba(0,0,0,.62);
+      --shadow2: 0 0 0 1px rgba(255,255,255,.04) inset;
+
+      --r14: 14px;
       --r18: 18px;
       --r22: 22px;
+      --r26: 26px;
     }
 
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans SC", "PingFang SC", "Microsoft Yahei", sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
       color:var(--text);
       background:
-        radial-gradient(900px 500px at 15% -10%, rgba(34,211,238,.18), transparent 60%),
-        radial-gradient(900px 600px at 110% 10%, rgba(167,139,250,.20), transparent 55%),
-        radial-gradient(800px 500px at 60% 110%, rgba(52,211,153,.12), transparent 55%),
+        radial-gradient(1100px 560px at 14% -12%, rgba(34,211,238,.20), transparent 60%),
+        radial-gradient(980px 620px at 110% 10%, rgba(167,139,250,.24), transparent 58%),
+        radial-gradient(980px 620px at 65% 120%, rgba(52,211,153,.14), transparent 55%),
+        radial-gradient(700px 450px at 40% 10%, rgba(251,113,133,.10), transparent 60%),
         var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* Subtle neon grid + scanline overlay */
+    .fx{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      opacity:.95;
+    }
+    .fx:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,.05), transparent 35%, transparent 65%, rgba(255,255,255,.03)),
+        repeating-linear-gradient(
+          90deg,
+          rgba(34,211,238,.07) 0px,
+          rgba(34,211,238,.07) 1px,
+          transparent 1px,
+          transparent 56px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          rgba(167,139,250,.06) 0px,
+          rgba(167,139,250,.06) 1px,
+          transparent 1px,
+          transparent 56px
+        );
+      mix-blend-mode: screen;
+      filter: blur(.25px);
+      opacity:.35;
+    }
+    .fx:after{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(700px 250px at 20% 0%, rgba(34,211,238,.18), transparent 65%),
+        radial-gradient(720px 280px at 95% 65%, rgba(167,139,250,.18), transparent 65%),
+        linear-gradient(180deg, rgba(0,0,0,.25), transparent 12%, transparent 88%, rgba(0,0,0,.35));
+      opacity:.55;
     }
 
     a{ color:inherit; text-decoration:none; }
-    .wrap{ max-width:1100px; margin:0 auto; padding:22px 16px 70px; }
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width:1150px;
+      margin:0 auto;
+      padding:22px 16px 76px;
+    }
 
     /* Top bar */
     .top{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
       padding:10px 0 16px;
     }
     .brand{
       display:flex; align-items:center; gap:10px;
-      font-weight:900; letter-spacing:.4px;
+      font-weight:950;
+      letter-spacing:.45px;
     }
     .orb{
       width:12px; height:12px; border-radius:999px;
       background: linear-gradient(135deg, var(--neon1), var(--neon2));
       box-shadow:
         0 0 0 7px rgba(34,211,238,.10),
-        0 0 18px rgba(167,139,250,.25);
+        0 0 24px rgba(167,139,250,.30),
+        0 0 40px rgba(34,211,238,.10);
     }
-    .nav{ display:flex; gap:10px; flex-wrap:wrap; }
-    .nav a{
-      font-size:13px; color:var(--muted);
+
+    .nav{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .nav a, .nav button{
+      font-size:13px;
+      color:var(--muted);
       padding:8px 10px;
       border:1px solid var(--line);
       border-radius:12px;
       background: rgba(255,255,255,.02);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
+      cursor:pointer;
+    }
+    .nav button{ font-family:inherit; }
+    .nav .pill{
+      border-radius:999px;
+      padding:7px 10px;
+      font-weight:850;
+      color: rgba(236,242,255,.86);
+      border-color: rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(34,211,238,.14), rgba(167,139,250,.12));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
     }
 
     /* Hero */
     .hero{
       border:1px solid var(--line);
-      border-radius:var(--r22);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius:var(--r26);
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
       box-shadow: var(--shadow);
       overflow:hidden;
+      position:relative;
     }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(800px 360px at 20% 0%, rgba(34,211,238,.22), transparent 60%),
+        radial-gradient(800px 420px at 95% 70%, rgba(167,139,250,.20), transparent 60%),
+        radial-gradient(700px 360px at 30% 90%, rgba(52,211,153,.12), transparent 62%);
+      opacity:.75;
+      pointer-events:none;
+    }
+
     .heroInner{
+      position:relative;
       padding:18px;
       display:grid;
-      grid-template-columns: 1.15fr .85fr;
+      grid-template-columns: 1.1fr .9fr;
       gap:14px;
       align-items:stretch;
     }
-    .titleRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
-    h1{ margin:0; font-size:30px; letter-spacing:.2px;}
+
+    .titleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:30px;
+      letter-spacing:.15px;
+      line-height:1.12;
+      text-shadow: 0 0 22px rgba(34,211,238,.12);
+    }
+
     .tag{
-      font-size:12px; color:var(--muted);
+      font-size:12px;
+      color:rgba(159,176,208,.92);
       padding:7px 10px;
-      border:1px solid var(--line);
+      border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.03);
       border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
     }
-    .sub{ margin-top:8px; color:var(--muted); line-height:1.65; font-size:13px; }
-    .badges{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; }
+    .spark{
+      width:8px; height:8px; border-radius:999px;
+      background: linear-gradient(135deg, var(--neon3), var(--neon1));
+      box-shadow: 0 0 14px rgba(52,211,153,.35);
+    }
+    .sub{
+      margin-top:8px;
+      color:rgba(159,176,208,.95);
+      line-height:1.65;
+      font-size:13px;
+      max-width:68ch;
+    }
+
+    .badges{
+      margin-top:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
     .badge{
-      font-size:12px; color:var(--muted);
+      font-size:12px;
+      color:rgba(159,176,208,.92);
       padding:7px 10px;
       border:1px solid rgba(255,255,255,.12);
       border-radius:999px;
       background: rgba(34,211,238,.06);
     }
-    .cta{ margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    .cta{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
     .btn{
-      display:inline-flex; align-items:center; gap:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.03);
-      font-weight:800;
+      font-weight:900;
       font-size:13px;
+      box-shadow: var(--shadow2);
     }
     .btn.primary{
-      border-color: rgba(34,211,238,.25);
+      border-color: rgba(34,211,238,.26);
       background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(167,139,250,.16));
-      box-shadow: 0 0 0 1px rgba(255,255,255,.04) inset;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        0 0 22px rgba(34,211,238,.10);
     }
+
+    /* Status row */
+    .statusRow{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      color:rgba(159,176,208,.9);
+      font-size:12px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.11);
+      background: rgba(255,255,255,.02);
+    }
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: rgba(255,255,255,.30);
+    }
+    .dot.live{ background: var(--neon3); box-shadow: 0 0 14px rgba(52,211,153,.35); }
+    .dot.warn{ background: var(--warn); box-shadow: 0 0 14px rgba(251,191,36,.25); }
+    .dot.bad{ background: var(--neon4); box-shadow: 0 0 14px rgba(251,113,133,.28); }
 
     /* Search */
     .searchCard{
@@ -123,27 +293,51 @@
       padding:14px;
       position:relative;
       overflow:hidden;
+      box-shadow: var(--shadow2);
     }
     .searchCard:before{
       content:"";
       position:absolute; inset:-2px;
-      background: radial-gradient(400px 220px at 20% 0%, rgba(34,211,238,.18), transparent 60%),
-                  radial-gradient(400px 220px at 90% 60%, rgba(167,139,250,.18), transparent 60%);
-      opacity:.8;
+      background:
+        radial-gradient(460px 260px at 22% 0%, rgba(34,211,238,.20), transparent 60%),
+        radial-gradient(520px 280px at 92% 70%, rgba(167,139,250,.20), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      opacity:.9;
       pointer-events:none;
     }
     .searchCard > *{ position:relative; }
-    .searchTitle{ font-weight:900; letter-spacing:.2px; margin-bottom:8px; }
+    .searchTitle{
+      font-weight:950;
+      letter-spacing:.2px;
+      margin-bottom:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .searchTitle small{
+      color: rgba(159,176,208,.85);
+      font-weight:850;
+      border:1px solid rgba(255,255,255,.10);
+      padding:6px 9px;
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+    }
     form{ margin:0; }
-    .searchRow{ display:flex; gap:10px; }
+    .searchRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
     input[type="text"]{
       flex:1;
       padding:12px 12px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.25);
+      background: rgba(0,0,0,.26);
       color:var(--text);
       outline:none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
     }
     input[type="text"]::placeholder{ color: rgba(159,176,208,.75); }
     .go{
@@ -152,10 +346,25 @@
       border:1px solid rgba(34,211,238,.25);
       background: rgba(34,211,238,.10);
       color:var(--text);
-      font-weight:900;
+      font-weight:950;
       cursor:pointer;
+      box-shadow: 0 0 18px rgba(34,211,238,.10);
     }
-    .mini{ margin-top:8px; font-size:12px; color:var(--muted); }
+    .mini{
+      margin-top:10px;
+      font-size:12px;
+      color:rgba(159,176,208,.9);
+      line-height:1.45;
+    }
+    kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: rgba(236,242,255,.9);
+    }
 
     /* Main grid */
     .grid{
@@ -163,22 +372,81 @@
       display:grid;
       grid-template-columns: 1.25fr .75fr;
       gap:14px;
+      align-items:start;
     }
     .card{
       border:1px solid var(--line);
-      border-radius:var(--r22);
+      border-radius:var(--r26);
       background: rgba(255,255,255,.03);
       padding:16px;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset;
+      box-shadow: var(--shadow2);
     }
     .card h2{
       margin:0 0 12px;
       font-size:14px;
       letter-spacing:.35px;
-      color: rgba(234,240,255,.95);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      color: rgba(236,242,255,.96);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    .hint{ font-size:12px; color:var(--muted); font-weight:700; }
+    .hint{
+      font-size:12px;
+      color:rgba(159,176,208,.90);
+      font-weight:850;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .hint .dot{
+      width:7px; height:7px;
+    }
+
+    /* Controls row inside Prices */
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+      padding:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: var(--r18);
+    }
+    .controls .left, .controls .right{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .select, .textbtn{
+      font-size:12px;
+      color:rgba(159,176,208,.95);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.02);
+      border-radius: 12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:900;
+      font-family:inherit;
+    }
+    .select{
+      padding:8px 10px;
+      outline:none;
+    }
+    .textbtn.primary{
+      border-color: rgba(34,211,238,.25);
+      background: rgba(34,211,238,.10);
+      color: rgba(236,242,255,.95);
+    }
+    .textbtn.danger{
+      border-color: rgba(251,113,133,.25);
+      background: rgba(251,113,133,.08);
+      color: rgba(236,242,255,.92);
+    }
 
     /* Prices table */
     table{ width:100%; border-collapse:collapse; }
@@ -188,21 +456,40 @@
       text-align:left;
       font-size:13px;
     }
-    th{ color: rgba(234,240,255,.78); font-size:12px; letter-spacing:.3px; font-weight:900;}
-    td{ color: rgba(234,240,255,.92); }
-    .sym{ font-weight:900; letter-spacing:.2px; }
-    .muted{ color:var(--muted); font-size:12px; }
+    th{
+      color: rgba(236,242,255,.80);
+      font-size:12px;
+      letter-spacing:.3px;
+      font-weight:950;
+    }
+    td{ color: rgba(236,242,255,.94); }
+    .sym{ font-weight:950; letter-spacing:.2px; }
+    .muted{ color:rgba(159,176,208,.92); font-size:12px; }
     .chg{
-      font-weight:900;
+      font-weight:950;
       padding:4px 8px;
       border-radius:999px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
-      display:inline-flex; align-items:center; gap:6px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
       font-size:12px;
     }
-    .up{ color: var(--neon3); border-color: rgba(52,211,153,.22); background: rgba(52,211,153,.08); }
-    .down{ color: #fb7185; border-color: rgba(251,113,133,.25); background: rgba(251,113,133,.08); }
+    .up{
+      color: var(--neon3);
+      border-color: rgba(52,211,153,.22);
+      background: rgba(52,211,153,.08);
+      box-shadow: 0 0 14px rgba(52,211,153,.08);
+    }
+    .down{
+      color: var(--neon4);
+      border-color: rgba(251,113,133,.25);
+      background: rgba(251,113,133,.08);
+      box-shadow: 0 0 14px rgba(251,113,133,.06);
+    }
+    .priceCell{ font-variant-numeric: tabular-nums; }
+    .rowName{ display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; }
 
     /* Timezones */
     .tzList{
@@ -210,21 +497,30 @@
       gap:10px;
     }
     .tzItem{
-      display:flex; justify-content:space-between; gap:10px; align-items:center;
-      padding:10px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      padding:12px 12px;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
-      border-radius:16px;
+      border-radius:18px;
     }
     .tzItem b{ font-size:13px; }
-    .tzItem span{ font-variant-numeric: tabular-nums; font-weight:900; }
-    .pill{
+    .tzItem .tzMeta{ color:rgba(159,176,208,.92); font-size:12px; margin-top:3px;}
+    .tzItem span{
+      font-variant-numeric: tabular-nums;
+      font-weight:950;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .pill2{
       font-size:11px;
-      color:var(--muted);
+      color:rgba(159,176,208,.95);
       padding:6px 9px;
       border:1px solid rgba(255,255,255,.10);
       border-radius:999px;
-      background: rgba(255,255,255,.02);
+      background: rgba(0,0,0,.18);
     }
 
     /* Footer */
@@ -233,27 +529,33 @@
       text-align:center;
       color: rgba(255,255,255,.35);
       font-size:12px;
+      line-height:1.6;
     }
 
     /* Responsive */
-    @media (max-width: 920px){
+    @media (max-width: 980px){
       .heroInner{ grid-template-columns: 1fr; }
       .grid{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
+
 <body>
+  <div class="fx"></div>
+
   <div class="wrap">
     <div class="top">
       <div class="brand">
         <div class="orb"></div>
         <div>W3TIGERDOG</div>
       </div>
+
       <div class="nav">
         <a href="#prices">Prices</a>
         <a href="#search">Search</a>
         <a href="#time">Time</a>
         <a id="navGithub" href="#" target="_blank" rel="noreferrer">GitHub</a>
+        <button class="pill" id="btnCopy">Copy Link</button>
       </div>
     </div>
 
@@ -261,34 +563,51 @@
       <div class="heroInner">
         <div>
           <div class="titleRow">
-            <h1>W3TIGERDOG · Web3 Dashboard</h1>
-            <span class="tag">⚡ Live · Neon · Minimal</span>
+            <h1>W3TIGERDOG · Web3 Neon Dashboard</h1>
+            <span class="tag"><span class="spark"></span> Live · Neon · Enhanced</span>
           </div>
+
           <div class="sub">
-            一个“主页级”Web3 面板：实时币价 + Google 搜索 + 全球主要时区。
-            适合直接挂 GitHub Pages，当作你的入口页 / 作品集首页。
+            A homepage-grade Web3 console: live major crypto prices, Google search, and world timezones —
+            designed for GitHub Pages as your personal landing / portfolio entry.
           </div>
+
           <div class="badges">
-            <span class="badge">JS · Fetch · UI</span>
+            <span class="badge">JavaScript · Fetch · UI</span>
             <span class="badge">Web3 Data / Monitoring</span>
             <span class="badge">No Framework</span>
+            <span class="badge">Fast + Minimal</span>
           </div>
+
           <div class="cta">
             <a class="btn primary" id="btnGithub" href="#" target="_blank" rel="noreferrer">🐙 GitHub</a>
             <a class="btn" href="#prices">📈 Prices</a>
             <a class="btn" href="#time">🌍 Timezones</a>
           </div>
+
+          <div class="statusRow" aria-label="status">
+            <span class="chip"><span class="dot live" id="dotLive"></span> Status: <b id="statusText">LIVE</b></span>
+            <span class="chip"><span class="dot" id="dotApi"></span> API: <b id="apiText">—</b></span>
+            <span class="chip"><span class="dot" id="dotUpd"></span> Updated: <b id="updText">—</b></span>
+          </div>
         </div>
 
         <div class="searchCard" id="search">
-          <div class="searchTitle">🔎 Google Search</div>
+          <div class="searchTitle">
+            <span>🔎 Google Search</span>
+            <small>Press <kbd>/</kbd> to focus</small>
+          </div>
+
           <form action="https://www.google.com/search" method="GET" target="_blank" rel="noreferrer">
             <div class="searchRow">
-              <input id="q" name="q" type="text" placeholder="搜索：Solana RPC / meme token / react..." autocomplete="off" />
+              <input id="q" name="q" type="text" placeholder="Search: Solana RPC / meme token / react..." autocomplete="off" />
               <button class="go" type="submit">Search</button>
             </div>
           </form>
-          <div class="mini">Tip：按 <b>/</b> 可快速聚焦搜索框</div>
+
+          <div class="mini">
+            Tip: use <kbd>/</kbd> to focus the search box quickly.
+          </div>
         </div>
       </div>
     </section>
@@ -297,14 +616,29 @@
       <section class="card" id="prices">
         <h2>
           <span>💎 Major Crypto Prices (Live)</span>
-          <span class="hint" id="priceStatus">updating...</span>
+          <span class="hint"><span class="dot" id="dotPrice"></span><span id="priceStatus">updating…</span></span>
         </h2>
+
+        <div class="controls">
+          <div class="left">
+            <select class="select" id="fiat">
+              <option value="usd">USD</option>
+              <option value="cad">CAD</option>
+            </select>
+            <button class="textbtn primary" id="btnRefresh" type="button">Refresh</button>
+            <button class="textbtn" id="btnAdd" type="button">Add Coin</button>
+            <button class="textbtn danger" id="btnReset" type="button">Reset Watchlist</button>
+          </div>
+          <div class="right">
+            <span class="muted">Watchlist is saved in your browser.</span>
+          </div>
+        </div>
 
         <table>
           <thead>
             <tr>
               <th>Asset</th>
-              <th>Price (USD)</th>
+              <th>Price</th>
               <th>24h</th>
               <th class="muted">Updated</th>
             </tr>
@@ -313,35 +647,39 @@
         </table>
 
         <div class="muted" style="margin-top:10px;">
-          数据来源：CoinGecko <code>/simple/price</code>（示例：ids=bitcoin,ethereum…）。:contentReference[oaicite:1]{index=1}
+          Data: CoinGecko <code>/simple/price</code> (ids=bitcoin,ethereum,…) · If rate-limited, last success is kept.
         </div>
       </section>
 
       <aside class="card" id="time">
         <h2>
           <span>🕒 World Timezones</span>
-          <span class="pill" id="localTz">Local</span>
+          <span class="pill2" id="localTz">Local</span>
         </h2>
 
         <div class="tzList" id="tzList"></div>
 
         <div class="muted" style="margin-top:10px;">
-          时间使用浏览器本地时钟 + IANA 时区格式化（实时走秒）。
+          Uses your device clock + IANA timezone formatting (updates every second).
         </div>
       </aside>
     </div>
 
     <footer>
-      © <span id="year"></span> W3TIGERDOG · Web3 Neon Home
+      © <span id="year"></span> W3TIGERDOG · Web3 Neon Dashboard<br/>
+      Built with pure HTML/CSS/JS on GitHub Pages.
     </footer>
   </div>
 
   <script>
-    // ====== 1) 你只需要改这里（30秒） ======
+    // ==============================
+    // CONFIG (edit if you want)
+    // ==============================
     const PROFILE = {
       github: "https://github.com/W3TigerDog",
-      // 想显示更多币？在 coins 里加 coinGeckoId + symbol + name
-      coins: [
+
+      // default watchlist (CoinGecko ids)
+      defaultCoins: [
         { id: "bitcoin",  symbol: "BTC", name: "Bitcoin" },
         { id: "ethereum", symbol: "ETH", name: "Ethereum" },
         { id: "solana",   symbol: "SOL", name: "Solana" },
@@ -350,9 +688,11 @@
         { id: "cardano",  symbol: "ADA", name: "Cardano" },
         { id: "dogecoin", symbol: "DOGE", name: "Dogecoin" },
       ],
-      // 主要时区（你可按喜好增删）
+
+      // timezones
       timezones: [
         { label: "Vancouver", tz: "America/Vancouver" },
+        { label: "Edmonton",  tz: "America/Edmonton" },
         { label: "New York",  tz: "America/New_York" },
         { label: "London",    tz: "Europe/London" },
         { label: "Paris",     tz: "Europe/Paris" },
@@ -362,70 +702,60 @@
         { label: "Singapore", tz: "Asia/Singapore" },
         { label: "Sydney",    tz: "Australia/Sydney" },
       ],
-      refreshSeconds: 15
+
+      refreshSeconds: 15,
     };
 
-    // ====== 2) UI init ======
-    document.getElementById("year").textContent = new Date().getFullYear();
-    document.getElementById("btnGithub").href = PROFILE.github;
-    document.getElementById("navGithub").href = PROFILE.github;
+    const LS_COINS = "w3tigerdog_watchlist_v2";
+    const LS_FIAT  = "w3tigerdog_fiat_v2";
 
-    // Quick focus: press "/" to focus search
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
-        e.preventDefault();
-        document.getElementById("q").focus();
-      }
-    });
+    // ==============================
+    // DOM
+    // ==============================
+    const elYear = document.getElementById("year");
+    const elBtnGithub = document.getElementById("btnGithub");
+    const elNavGithub = document.getElementById("navGithub");
+    const elBtnCopy = document.getElementById("btnCopy");
 
-    // Local timezone pill
-    try{
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      document.getElementById("localTz").textContent = tz || "Local";
-    }catch(_){}
+    const elFiat = document.getElementById("fiat");
+    const elBtnRefresh = document.getElementById("btnRefresh");
+    const elBtnAdd = document.getElementById("btnAdd");
+    const elBtnReset = document.getElementById("btnReset");
 
-    // ====== 3) Timezones render (tick every second) ======
-    const tzListEl = document.getElementById("tzList");
+    const elPriceBody = document.getElementById("priceBody");
+    const elPriceStatus = document.getElementById("priceStatus");
+    const elDotPrice = document.getElementById("dotPrice");
 
-    function formatTzTime(tz){
-      // 24小时制 + 秒
-      const fmt = new Intl.DateTimeFormat("en-GB", {
-        timeZone: tz,
-        hour12: false,
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit", second: "2-digit"
-      });
-      return fmt.format(new Date());
+    const elTzList = document.getElementById("tzList");
+    const elLocalTz = document.getElementById("localTz");
+
+    const elDotApi = document.getElementById("dotApi");
+    const elDotUpd = document.getElementById("dotUpd");
+    const elApiText = document.getElementById("apiText");
+    const elUpdText = document.getElementById("updText");
+
+    // ==============================
+    // Helpers
+    // ==============================
+    function escapeHtml(str){
+      return String(str ?? "").replace(/[&<>"']/g, (m) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      })[m]);
     }
 
-    function renderTimezones(){
-      tzListEl.innerHTML = PROFILE.timezones.map(z => `
-        <div class="tzItem">
-          <div>
-            <b>${escapeHtml(z.label)}</b>
-            <div class="muted">${escapeHtml(z.tz)}</div>
-          </div>
-          <span>${escapeHtml(formatTzTime(z.tz))}</span>
-        </div>
-      `).join("");
+    function nowHMSS(){
+      return new Intl.DateTimeFormat("en-GB", {
+        hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit"
+      }).format(new Date());
     }
 
-    renderTimezones();
-    setInterval(renderTimezones, 1000);
-
-    // ====== 4) Crypto prices (CoinGecko /simple/price) ======
-    // Public endpoint commonly used: https://api.coingecko.com/api/v3/simple/price
-    // Params: ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true
-    // Docs: /simple/price.  :contentReference[oaicite:2]{index=2}
-    const priceBody = document.getElementById("priceBody");
-    const priceStatus = document.getElementById("priceStatus");
-
-    function money(n){
+    function money(n, currency){
       if (n == null || !Number.isFinite(n)) return "—";
-      return new Intl.NumberFormat("en-US", {
+      const maxFrac = n >= 1000 ? 0 : (n >= 1 ? 2 : 6);
+      return new Intl.NumberFormat("en-CA", {
         style: "currency",
-        currency: "USD",
-        maximumFractionDigits: n >= 1000 ? 0 : (n >= 1 ? 2 : 6)
+        currency: currency.toUpperCase(),
+        maximumFractionDigits: maxFrac
       }).format(n);
     }
 
@@ -436,61 +766,213 @@
       return { text: `${sign}${p.toFixed(2)}%`, cls };
     }
 
-    function nowHMSS(){
-      return new Intl.DateTimeFormat("en-GB", {
-        hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit"
-      }).format(new Date());
+    function setDot(el, mode){
+      // mode: "ok" | "warn" | "bad" | "idle"
+      el.classList.remove("live","warn","bad");
+      if(mode === "ok") el.classList.add("live");
+      else if(mode === "warn") el.classList.add("warn");
+      else if(mode === "bad") el.classList.add("bad");
     }
 
-    async function fetchPrices(){
-      const ids = PROFILE.coins.map(c => c.id).join(",");
+    // ==============================
+    // State (watchlist + fiat)
+    // ==============================
+    function loadCoins(){
+      try{
+        const raw = localStorage.getItem(LS_COINS);
+        if(!raw) return [...PROFILE.defaultCoins];
+        const parsed = JSON.parse(raw);
+        if(Array.isArray(parsed) && parsed.length) return parsed;
+        return [...PROFILE.defaultCoins];
+      }catch(_){
+        return [...PROFILE.defaultCoins];
+      }
+    }
+
+    function saveCoins(coins){
+      localStorage.setItem(LS_COINS, JSON.stringify(coins));
+    }
+
+    function loadFiat(){
+      const f = (localStorage.getItem(LS_FIAT) || "usd").toLowerCase();
+      return (f === "cad" || f === "usd") ? f : "usd";
+    }
+    function saveFiat(f){
+      localStorage.setItem(LS_FIAT, f);
+    }
+
+    let coins = loadCoins();
+    let fiat = loadFiat();
+
+    // ==============================
+    // Init UI
+    // ==============================
+    elYear.textContent = new Date().getFullYear();
+    elBtnGithub.href = PROFILE.github;
+    elNavGithub.href = PROFILE.github;
+    elFiat.value = fiat;
+
+    // Copy site link
+    elBtnCopy.addEventListener("click", async () => {
+      const link = location.origin + "/";
+      try{
+        await navigator.clipboard.writeText(link);
+        elBtnCopy.textContent = "Copied!";
+        setTimeout(() => elBtnCopy.textContent = "Copy Link", 900);
+      }catch(_){
+        prompt("Copy this link:", link);
+      }
+    });
+
+    // Quick focus search: press "/"
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+        e.preventDefault();
+        document.getElementById("q").focus();
+      }
+    });
+
+    // Local timezone label
+    try{
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      elLocalTz.textContent = tz || "Local";
+    }catch(_){}
+
+    // Fiat change
+    elFiat.addEventListener("change", () => {
+      fiat = elFiat.value;
+      saveFiat(fiat);
+      fetchPrices(true);
+    });
+
+    // Buttons
+    elBtnRefresh.addEventListener("click", () => fetchPrices(true));
+
+    elBtnAdd.addEventListener("click", () => {
+      const id = prompt("CoinGecko coin id (example: 'pepe', 'uniswap', 'matic-network'):");
+      if(!id) return;
+      const symbol = prompt("Symbol (example: PEPE):") || id.toUpperCase().slice(0,6);
+      const name = prompt("Name (example: Pepe):") || id;
+      coins.push({ id: id.trim().toLowerCase(), symbol: symbol.trim(), name: name.trim() });
+      saveCoins(coins);
+      fetchPrices(true);
+    });
+
+    elBtnReset.addEventListener("click", () => {
+      if(!confirm("Reset watchlist to default?")) return;
+      coins = [...PROFILE.defaultCoins];
+      saveCoins(coins);
+      fetchPrices(true);
+    });
+
+    // ==============================
+    // Timezones (tick every second)
+    // ==============================
+    function formatTz(tz){
+      // date + time (24h)
+      const fmt = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        hour12: false,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      });
+      return fmt.format(new Date());
+    }
+
+    function renderTimezones(){
+      elTzList.innerHTML = PROFILE.timezones.map(z => `
+        <div class="tzItem">
+          <div>
+            <b>${escapeHtml(z.label)}</b>
+            <div class="tzMeta">${escapeHtml(z.tz)}</div>
+          </div>
+          <span>${escapeHtml(formatTz(z.tz))}</span>
+        </div>
+      `).join("");
+    }
+
+    renderTimezones();
+    setInterval(renderTimezones, 1000);
+
+    // ==============================
+    // Prices (CoinGecko simple/price)
+    // ==============================
+    let lastOkTs = 0;
+    let inflight = false;
+
+    async function fetchPrices(force = false){
+      // throttle to reduce rate-limit
+      const now = Date.now();
+      if(!force && inflight) return;
+      if(!force && now - lastOkTs < 5500) return;
+
+      inflight = true;
+      elPriceStatus.textContent = "updating…";
+      setDot(elDotPrice, "warn");
+
+      const ids = coins.map(c => c.id).join(",");
       const url = new URL("https://api.coingecko.com/api/v3/simple/price");
       url.searchParams.set("ids", ids);
-      url.searchParams.set("vs_currencies", "usd");
+      url.searchParams.set("vs_currencies", fiat);
       url.searchParams.set("include_24hr_change", "true");
 
-      priceStatus.textContent = "updating...";
       try{
-        const res = await fetch(url.toString(), {
-          headers: { "accept": "application/json" }
-        });
+        const res = await fetch(url.toString(), { headers: { "accept": "application/json" } });
         if(!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
 
+        const data = await res.json();
         const updated = nowHMSS();
-        priceBody.innerHTML = PROFILE.coins.map(c => {
+        lastOkTs = Date.now();
+
+        elPriceBody.innerHTML = coins.map(c => {
           const row = data?.[c.id];
-          const price = row?.usd;
-          const chg24 = row?.usd_24h_change;
+          const price = row?.[fiat];
+          const chg24 = row?.[`${fiat}_24h_change`];
           const pct = fmtPct(chg24);
 
           return `
             <tr>
-              <td><span class="sym">${escapeHtml(c.symbol)}</span> <span class="muted">${escapeHtml(c.name)}</span></td>
-              <td>${escapeHtml(money(price))}</td>
+              <td>
+                <div class="rowName">
+                  <span class="sym">${escapeHtml(c.symbol)}</span>
+                  <span class="muted">${escapeHtml(c.name)}</span>
+                  <span class="muted">(${escapeHtml(c.id)})</span>
+                </div>
+              </td>
+              <td class="priceCell">${escapeHtml(money(price, fiat))}</td>
               <td><span class="${pct.cls}">${escapeHtml(pct.text)}</span></td>
               <td class="muted">${escapeHtml(updated)}</td>
             </tr>
           `;
         }).join("");
 
-        priceStatus.textContent = `updated ${updated}`;
+        elPriceStatus.textContent = `updated ${updated}`;
+        setDot(elDotPrice, "ok");
+
+        // status chips
+        setDot(elDotApi, "ok");
+        elApiText.textContent = "OK";
+        setDot(elDotUpd, "ok");
+        elUpdText.textContent = updated;
+
       }catch(err){
-        priceStatus.textContent = "update failed (rate-limit / network)";
-        // 不清空旧数据，保留上一次成功的
+        // keep last successful table (do not clear)
+        elPriceStatus.textContent = "update failed (rate-limit / network)";
+        setDot(elDotPrice, "bad");
+
+        setDot(elDotApi, "bad");
+        elApiText.textContent = "FAIL";
+        setDot(elDotUpd, "warn");
+        elUpdText.textContent = (lastOkTs ? new Date(lastOkTs).toLocaleTimeString() : "—");
+
         console.warn(err);
+      }finally{
+        inflight = false;
       }
     }
 
-    fetchPrices();
-    setInterval(fetchPrices, Math.max(10, PROFILE.refreshSeconds) * 1000);
-
-    // ====== utils ======
-    function escapeHtml(str){
-      return String(str ?? "").replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      })[m]);
-    }
+    fetchPrices(true);
+    setInterval(() => fetchPrices(false), Math.max(10, PROFILE.refreshSeconds) * 1000);
   </script>
 </body>
 </html>
