@@ -74,6 +74,7 @@
             <a class="btn" href="#charts">📉 Charts</a>
           </div>
 
+          <!-- Meme Monitor Cards -->
           <div class="memeLinks">
             <a class="memeCard" href="https://meme-monitor.onrender.com/meme15m.html" target="_blank" rel="noreferrer">
               <div class="memeTop">
@@ -104,8 +105,6 @@
             Quick access: Meme Monitor timeframes (opens in new tab).
           </div>
 
-
-
           <div class="statusRow">
             <span class="chip"><span class="dot live" id="dotLive"></span> Status: <b id="statusText">LIVE</b></span>
             <span class="chip"><span class="dot" id="dotApi"></span> Feed: <b id="apiText">—</b></span>
@@ -113,6 +112,7 @@
           </div>
         </div>
 
+        <!-- Right Side Search Card -->
         <div class="searchCard" id="search">
           <div class="searchTitle">
             <span>🔎 Google Search</span>
@@ -123,6 +123,19 @@
             <div class="searchRow">
               <input id="q" name="q" type="text" placeholder="Search: Solana RPC / meme token / react..." autocomplete="off" />
               <button class="go" type="submit">Search</button>
+            </div>
+          </form>
+
+          <!-- YouTube Search -->
+          <div class="searchTitle" style="margin-top:12px;">
+            <span>▶️ YouTube Search</span>
+            <small>Press <kbd>y</kbd> to focus</small>
+          </div>
+
+          <form action="https://www.youtube.com/results" method="GET" target="_blank" rel="noreferrer">
+            <div class="searchRow">
+              <input id="ytq" name="search_query" type="text" placeholder="Search YouTube: Solana / web3 / react..." autocomplete="off" />
+              <button class="go" type="submit">YouTube</button>
             </div>
           </form>
 
@@ -143,14 +156,7 @@
             <button class="go" id="btnGemini" type="button">Gemini</button>
           </div>
 
-          
-
-
-
-
-
-
-          <div class="mini">Tip: use <kbd>/</kbd> to focus the search box quickly.</div>
+          <div class="mini">Tip: use <kbd>/</kbd> to focus ChatGPT, <kbd>y</kbd> to focus YouTube quickly.</div>
         </div>
       </div>
     </section>
@@ -161,7 +167,6 @@
           <span>💎 Major Crypto Prices (Live)</span>
           <span class="hint"><span class="dot" id="dotPrice"></span><span id="priceStatus">connecting…</span></span>
         </h2>
-
 
         <table>
           <thead>
@@ -247,28 +252,23 @@
   </div>
 
   <script>
-
     // ---- Visitor local date/time (YYYY-MM-DD + live clock) ----
     const elLocalNow = document.getElementById("localNow");
-
     function pad2(n){ return String(n).padStart(2, "0"); }
-
     function renderLocalNow(){
       if(!elLocalNow) return;
       const d = new Date();
       const yyyy = d.getFullYear();
       const mm = pad2(d.getMonth() + 1);
       const dd = pad2(d.getDate());
-
       const hh = pad2(d.getHours());
       const mi = pad2(d.getMinutes());
       const ss = pad2(d.getSeconds());
-
       elLocalNow.textContent = `🕒 ${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
-
     renderLocalNow();
     setInterval(renderLocalNow, 1000);
+
     // THEME
     const LS_THEME  = "w3tigerdog_theme_v4";
     const THEMES = {
@@ -314,7 +314,6 @@
 
     const elTzList = document.getElementById("tzList");
     const elLocalTz = document.getElementById("localTz");
-
 
     // Helpers
     function escapeHtml(str){
@@ -369,33 +368,19 @@
       }
     });
 
-    // quick focus search
-
-
-
-
-
-
-
     // ---- ChatGPT / Gemini quick chat launch ----
     const elChatGPTPrompt = document.getElementById("chatgptPrompt");
     const elGeminiPrompt  = document.getElementById("geminiPrompt");
     const elBtnChatGPT    = document.getElementById("btnChatGPT");
     const elBtnGemini     = document.getElementById("btnGemini");
 
-    // 只做“把问题带过去并打开新标签页”
-    // 注意：这些站点通常不允许被 iframe 嵌入，只能用 window.open
     function openChatGPT(q){
       const text = (q || "").trim();
-      // ChatGPT 目前最稳定是直接打开聊天主页（不同时间可能会变）
-      // 这里把你的问题编码进 URL（如果将来站点支持，会自动填入；不支持也不影响打开）
       const url = "https://chatgpt.com/?q=" + encodeURIComponent(text);
       window.open(url, "_blank", "noopener,noreferrer");
     }
-
     function openGemini(q){
       const text = (q || "").trim();
-      // Gemini 同理：打开主页 + 带 query
       const url = "https://gemini.google.com/app?q=" + encodeURIComponent(text);
       window.open(url, "_blank", "noopener,noreferrer");
     }
@@ -409,7 +394,6 @@
         openChatGPT(elChatGPTPrompt.value);
       }
     });
-
     elGeminiPrompt?.addEventListener("keydown", (e) => {
       if(e.key === "Enter"){
         e.preventDefault();
@@ -417,14 +401,19 @@
       }
     });
 
-
-
-
-
+    // Shortcuts: "/" -> ChatGPT, "y" -> YouTube
     window.addEventListener("keydown", (e) => {
-      if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if (e.key === "/") {
         e.preventDefault();
-        document.getElementById("chatgptPrompt")?.focus(); // 优先 ChatGPT
+        document.getElementById("chatgptPrompt")?.focus();
+      }
+
+      if (e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        document.getElementById("ytq")?.focus();
       }
     });
 
@@ -433,7 +422,7 @@
       elLocalTz.textContent = tz || "Local";
     }catch(_){}
 
-    // Timezones (Los Angeles + Chicago)
+    // Timezones
     const TIMEZONES = [
       { label: "Los Angeles", tz: "America/Los_Angeles" },
       { label: "Chicago", tz: "America/Chicago" },
@@ -473,12 +462,10 @@
     const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
     let ws = null;
 
-
-
     let COINS = [];
     let latest = null;
 
-    // ✅ Chart 专用：主要股票指数（不影响上面的 Live Prices）
+    // Chart assets
     const CHART_ASSETS = [
       { id: "^spx",  symbol: "SPX",  name: "S&P 500" },
       { id: "^ndx",  symbol: "NDX",  name: "Nasdaq 100" },
@@ -491,17 +478,9 @@
       { id: "^hsi",  symbol: "HSI",  name: "Hang Seng" }
     ];
 
-
-
     let chart = null;
     let currentTF = "1m";
-
-
-
-
-
     let currentCoin = "^spx";
-
     let currentOHLC = "5m";
     let showOHLC = false;
 
@@ -517,9 +496,7 @@
         setDot(elDotPrice, "ok");
         elPriceStatus.textContent = "connected";
 
-        // ✅ Chart 下拉立即可用（指数）
         fillCoinSelect();
-
         requestSeries(currentCoin, currentTF);
         requestOHLC(currentCoin, currentOHLC);
       };
@@ -539,8 +516,6 @@
         if(msg.type === "snapshot"){
           COINS = msg.payload.coins || [];
           latest = msg.payload.latest || null;
-
-          // ✅ 这里不再负责 chart 下拉
           if(latest) renderPrices(latest);
         }
 
@@ -671,11 +646,7 @@
           plugins: { legend: { display: true } },
           scales: {
             x: { ticks: { maxTicksLimit: 10 } },
-            y: {
-              type: "linear",
-              beginAtZero: false,
-              ticks: { maxTicksLimit: 6 }
-            }
+            y: { type: "linear", beginAtZero: false, ticks: { maxTicksLimit: 6 } }
           }
         }
       });
@@ -729,8 +700,7 @@
       else requestSeries(currentCoin, currentTF);
     });
 
-
-    // Particles (same)
+    // Particles
     const canvas = document.getElementById("particles");
     const pctx = canvas.getContext("2d", { alpha: true });
     let w = 0, h = 0, dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -835,5 +805,4 @@
     connectWS();
   </script>
 </body>
-
 </html>
