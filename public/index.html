@@ -441,12 +441,35 @@
     const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
     let ws = null;
 
+
+
     let COINS = [];
     let latest = null;
 
+    // ✅ Chart 专用：主要股票指数（不影响上面的 Live Prices）
+    const CHART_ASSETS = [
+      { id: "^spx",  symbol: "SPX",  name: "S&P 500" },
+      { id: "^ndx",  symbol: "NDX",  name: "Nasdaq 100" },
+      { id: "^dji",  symbol: "DJI",  name: "Dow Jones" },
+      { id: "^rut",  symbol: "RUT",  name: "Russell 2000" },
+      { id: "^vix",  symbol: "VIX",  name: "VIX" },
+      { id: "^dax",  symbol: "DAX",  name: "DAX" },
+      { id: "^ftse", symbol: "FTSE", name: "FTSE 100" },
+      { id: "^n225", symbol: "N225", name: "Nikkei 225" },
+      { id: "^hsi",  symbol: "HSI",  name: "Hang Seng" }
+    ];
+
+
+
     let chart = null;
     let currentTF = "1m";
-    let currentCoin = "bitcoin";
+
+
+
+
+
+    let currentCoin = "^spx";
+
     let currentOHLC = "5m";
     let showOHLC = false;
 
@@ -461,6 +484,10 @@
         elApiText.textContent = "WS OK";
         setDot(elDotPrice, "ok");
         elPriceStatus.textContent = "connected";
+
+        // ✅ Chart 下拉立即可用（指数）
+        fillCoinSelect();
+
         requestSeries(currentCoin, currentTF);
         requestOHLC(currentCoin, currentOHLC);
       };
@@ -480,7 +507,8 @@
         if(msg.type === "snapshot"){
           COINS = msg.payload.coins || [];
           latest = msg.payload.latest || null;
-          fillCoinSelect();
+
+          // ✅ 这里不再负责 chart 下拉
           if(latest) renderPrices(latest);
         }
 
@@ -592,8 +620,9 @@
     }
 
     function fillCoinSelect(){
-      if(!COINS.length) return;
-      elChartCoin.innerHTML = COINS.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.symbol)} · ${escapeHtml(c.name)}</option>`).join("");
+      elChartCoin.innerHTML = CHART_ASSETS
+        .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.symbol)} · ${escapeHtml(a.name)}</option>`)
+        .join("");
       elChartCoin.value = currentCoin;
     }
 
@@ -622,7 +651,7 @@
       c.data.labels = labels;
       c.data.datasets[0].data = data;
 
-      const coinMeta = COINS.find(x => x.id === coin);
+      const coinMeta = CHART_ASSETS.find(x => x.id === coin);
       const coinLabel = coinMeta ? `${coinMeta.symbol} · ${coinMeta.name}` : coin;
       c.data.datasets[0].label = `${coinLabel} · ${label}`;
 
