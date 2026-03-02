@@ -10,10 +10,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
-  <!-- ✅ external CSS -->
   <link rel="stylesheet" href="./style.css" />
-
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
@@ -68,13 +65,6 @@
             <span class="badge">Theme + Particles</span>
           </div>
 
-          <!-- <div class="cta">
-            <a class="btn primary" id="btnGithub" href="#" target="_blank" rel="noreferrer">🐙 GitHub</a>
-            <a class="btn" href="#prices">📈 Prices</a>
-            <a class="btn" href="#charts">📉 Charts</a>
-          </div> -->
-
-          <!-- Meme Monitor Cards -->
           <div class="memeLinks">
             <a class="memeCard" href="https://meme-monitor.onrender.com/meme15m.html" target="_blank" rel="noreferrer">
               <div class="memeTop">
@@ -112,7 +102,6 @@
           </div>
         </div>
 
-        <!-- Right Side Search Card -->
         <div class="searchCard" id="search">
           <div class="searchTitle">
             <span>🔎 Google Search</span>
@@ -126,7 +115,6 @@
             </div>
           </form>
 
-          <!-- YouTube Search -->
           <div class="searchTitle" style="margin-top:12px;">
             <span>▶️ YouTube Search</span>
             <small>Press <kbd>y</kbd> to focus</small>
@@ -239,7 +227,12 @@
         <span>🕒 World Timezones</span>
         <span class="pill2" id="localTz">Local</span>
       </h2>
-      <div class="tzList" id="tzList"></div>
+
+      <div class="worldMapWrap" id="worldMapWrap">
+        <img class="worldMapImg" src="./world-map.png" alt="World map" />
+        <div class="markers" id="markers"></div>
+      </div>
+
       <div class="muted" style="margin-top:10px;">
         Uses your device clock + IANA timezone formatting (updates every second).
       </div>
@@ -252,7 +245,6 @@
   </div>
 
   <script>
-    // ---- Visitor local date/time (YYYY-MM-DD + live clock) ----
     const elLocalNow = document.getElementById("localNow");
     function pad2(n){ return String(n).padStart(2, "0"); }
     function renderLocalNow(){
@@ -269,7 +261,6 @@
     renderLocalNow();
     setInterval(renderLocalNow, 1000);
 
-    // THEME
     const LS_THEME  = "w3tigerdog_theme_v4";
     const THEMES = {
       cyan:   { neon1:"#22d3ee", neon2:"#a78bfa", neon3:"#34d399" },
@@ -291,7 +282,6 @@
       return THEMES[t] ? t : "cyan";
     }
 
-    // DOM
     const elYear = document.getElementById("year");
     const elNavGithub = document.getElementById("navGithub");
     const elBtnCopy = document.getElementById("btnCopy");
@@ -312,10 +302,8 @@
     const elChartCoin = document.getElementById("chartCoin");
     const elGainersList = document.getElementById("gainersList");
 
-    const elTzList = document.getElementById("tzList");
     const elLocalTz = document.getElementById("localTz");
 
-    // Helpers
     function escapeHtml(str){
       return String(str ?? "").replace(/[&<>"']/g, (m) => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -348,7 +336,6 @@
       return { text: `${sign}${p.toFixed(2)}%`, cls };
     }
 
-    // Init
     elYear.textContent = new Date().getFullYear();
     elNavGithub.href = "https://github.com/W3TigerDog";
 
@@ -368,7 +355,6 @@
       }
     });
 
-    // ---- ChatGPT / Gemini quick chat launch ----
     const elChatGPTPrompt = document.getElementById("chatgptPrompt");
     const elGeminiPrompt  = document.getElementById("geminiPrompt");
     const elBtnChatGPT    = document.getElementById("btnChatGPT");
@@ -401,7 +387,6 @@
       }
     });
 
-    // Shortcuts: "/" -> ChatGPT, "y" -> YouTube
     window.addEventListener("keydown", (e) => {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
@@ -422,50 +407,82 @@
       elLocalTz.textContent = tz || "Local";
     }catch(_){}
 
-    // Timezones
-    const TIMEZONES = [
-      { label: "Los Angeles", tz: "America/Los_Angeles" },
-      { label: "Chicago", tz: "America/Chicago" },
-      { label: "New York", tz: "America/New_York" },
-      { label: "London", tz: "Europe/London" },
-      { label: "Paris", tz: "Europe/Paris" },
-      { label: "Dubai", tz: "Asia/Dubai" },
-      { label: "Beijing", tz: "Asia/Shanghai" },
-      { label: "Tokyo", tz: "Asia/Tokyo" },
-      { label: "Singapore", tz: "Asia/Singapore" },
-      { label: "Sydney", tz: "Australia/Sydney" }
+    const elMarkers = document.getElementById("markers");
+    const elWorldMapWrap = document.getElementById("worldMapWrap");
+
+    const MAP_TZS = [
+      { label: "Los Angeles", tz: "America/Los_Angeles", lat: 34.05, lon: -118.24 },
+      { label: "Chicago",     tz: "America/Chicago",     lat: 41.88, lon: -87.63  },
+      { label: "New York",    tz: "America/New_York",    lat: 40.71, lon: -74.01  },
+      { label: "London",      tz: "Europe/London",       lat: 51.51, lon: -0.13   },
+      { label: "Paris",       tz: "Europe/Paris",        lat: 48.86, lon: 2.35    },
+      { label: "Dubai",       tz: "Asia/Dubai",          lat: 25.20, lon: 55.27   },
+      { label: "Beijing",     tz: "Asia/Shanghai",       lat: 39.90, lon: 116.40  },
+      { label: "Tokyo",       tz: "Asia/Tokyo",          lat: 35.68, lon: 139.69  },
+      { label: "Singapore",   tz: "Asia/Singapore",      lat: 1.35,  lon: 103.82  },
+      { label: "Sydney",      tz: "Australia/Sydney",    lat: -33.87, lon: 151.21 },
     ];
-    function formatTz(tz){
-      const fmt = new Intl.DateTimeFormat("en-GB", {
+
+    function fmtTimeInTz(tz){
+      return new Intl.DateTimeFormat("en-GB", {
         timeZone: tz,
         hour12: false,
         year: "numeric", month: "2-digit", day: "2-digit",
         hour: "2-digit", minute: "2-digit", second: "2-digit"
-      });
-      return fmt.format(new Date());
+      }).format(new Date());
     }
-    function renderTimezones(){
-      elTzList.innerHTML = TIMEZONES.map(z => `
-        <div class="tzItem">
-          <div>
+
+    function project(lat, lon, rect){
+      const x = (lon + 180) / 360 * rect.width;
+      const y = (90 - lat) / 180 * rect.height;
+      return { x, y };
+    }
+
+    function ensureMarkers(){
+      if(!elMarkers) return;
+      elMarkers.innerHTML = MAP_TZS.map((z, i) => `
+        <div class="marker" data-i="${i}">
+          <div class="pin"></div>
+          <div class="bubble">
             <b>${escapeHtml(z.label)}</b>
-            <div class="tzMeta">${escapeHtml(z.tz)}</div>
+            <small>${escapeHtml(z.tz)}</small>
+            <span class="t" id="t_${i}">--/--/---- --:--:--</span>
           </div>
-          <span>${escapeHtml(formatTz(z.tz))}</span>
         </div>
       `).join("");
     }
-    renderTimezones();
-    setInterval(renderTimezones, 1000);
 
-    // WebSocket
+    function layoutMarkers(){
+      if(!elWorldMapWrap || !elMarkers) return;
+      const rect = elWorldMapWrap.getBoundingClientRect();
+      document.querySelectorAll(".marker").forEach((el) => {
+        const i = Number(el.getAttribute("data-i"));
+        const z = MAP_TZS[i];
+        const p = project(z.lat, z.lon, rect);
+        el.style.left = p.x + "px";
+        el.style.top  = p.y + "px";
+      });
+    }
+
+    function tickMarkers(){
+      MAP_TZS.forEach((z, i) => {
+        const el = document.getElementById(`t_${i}`);
+        if(el) el.textContent = fmtTimeInTz(z.tz);
+      });
+    }
+
+    ensureMarkers();
+    layoutMarkers();
+    tickMarkers();
+    setInterval(tickMarkers, 1000);
+    window.addEventListener("resize", layoutMarkers);
+
     const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
     let ws = null;
 
     let COINS = [];
     let latest = null;
 
-    // Chart assets
     const CHART_ASSETS = [
       { id: "^spx",  symbol: "SPX",  name: "S&P 500" },
       { id: "^ndx",  symbol: "NDX",  name: "Nasdaq 100" },
@@ -700,7 +717,6 @@
       else requestSeries(currentCoin, currentTF);
     });
 
-    // Particles
     const canvas = document.getElementById("particles");
     const pctx = canvas.getContext("2d", { alpha: true });
     let w = 0, h = 0, dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -801,7 +817,6 @@
       startParticles();
     }
 
-    // connect WS
     connectWS();
   </script>
 </body>
