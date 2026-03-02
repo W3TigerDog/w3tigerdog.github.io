@@ -443,17 +443,20 @@
   if(!elMarkers) return;
 
   const OFFSETS = {
-    "Los Angeles": { x: -90, y: -10 },
-    "Chicago":     { x: -10, y: -75 },
-    "New York":    { x:  85, y: -35 },
-    "London":      { x:  30, y: -85 },
-    "Paris":       { x: -80, y: -45 },
-    "Dubai":       { x:  75, y: -15 },
-    "Beijing":     { x: -80, y: -45 },
-    "Tokyo":       { x:  70, y: -10 },
-    "Singapore":   { x: -90, y:  15 },
-    "Sydney":      { x:  70, y:  20 }
-  };
+  "Los Angeles": { x: -95, y: -10 },
+
+  "Chicago":     { x: -10, y: -95 },
+  "New York":    { x:  70, y: -40 },
+  "Paris":       { x: -55, y: -55 },
+  "London":      { x:  10, y: -115 },
+
+  "Dubai":       { x:  60, y: -30 },
+  "Singapore":   { x:  30, y:  30 },
+  "Beijing":     { x:  35, y: -75 },
+  "Tokyo":       { x:  55, y: -10 },
+
+  "Sydney":      { x: -95, y:  10 }
+};
 
   elMarkers.innerHTML = MAP_TZS.map((z, i) => {
     const off = OFFSETS[z.label] || { x: 0, y: -40 };
@@ -505,7 +508,7 @@ function layoutMarkers(){
     setInterval(tickMarkers, 1000);
     window.addEventListener("resize", layoutMarkers);
 
-    
+
     document.querySelector(".worldMapImg")?.addEventListener("load", layoutMarkers);
 
     const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
