@@ -490,9 +490,9 @@ footer{
 .quickLinkRow span{
   flex: 1;
   min-width: 0;
-  color: rgba(226,232,240,.78);
-  font-size: 13px;
-  font-weight: 700;
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 800;
   padding: 0 12px;
 }
 
