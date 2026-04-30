@@ -493,6 +493,7 @@ footer{
   color: rgba(226,232,240,.78);
   font-size: 13px;
   font-weight: 700;
+  padding: 0 12px;
 }
 
 .searchRow .linkButton{
