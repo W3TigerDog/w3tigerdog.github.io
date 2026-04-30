@@ -483,6 +483,22 @@ footer{
   box-shadow: 0 0 20px rgba(34,211,238,.18);
 }
 
+.quickLinkRow{
+  margin-top: 10px;
+}
+
+.quickLinkRow span{
+  flex: 1;
+  min-width: 0;
+  color: rgba(226,232,240,.78);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.searchRow .linkButton{
+  text-decoration: none;
+}
+
 /* World Map Timezones overlay */
 .worldMapWrap{
   position: relative;
