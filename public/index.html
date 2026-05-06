@@ -4,14 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>W3TigerDog</title>
-  <meta name="description" content="W3TIGERDOG Web3 Neon Dashboard: WebSocket live feed, Chart.js history, SQLite storage." />
+  <meta name="description" content="W3TIGERDOG Web3 Neon Dashboard: WebSocket live feed and SQLite storage." />
 
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <link rel="stylesheet" href="./style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
@@ -27,7 +26,6 @@
 
       <div class="nav">
         <a href="#prices">Prices</a>
-        <a href="#charts">Charts</a>
         <a href="#time">Time</a>
         <a id="navGithub" href="#" target="_blank" rel="noreferrer">GitHub</a>
 
@@ -55,7 +53,7 @@
 
           <div class="sub">
             Real-time Web3 dashboard powered by WebSocket + SQLite storage:
-            live prices, history charts (1m/5m/1h), 24h OHLC, and top gainers.
+            live prices, 24h movement, and top gainers.
           </div>
 
           <div class="badges">
@@ -189,43 +187,6 @@
       </aside>
     </div>
 
-    <section class="card" id="charts" style="margin-top:14px;">
-      <h2>
-        <span>📉 Price History (Chart.js)</span>
-        <span class="hint"><span class="dot" id="dotChart"></span><span id="chartStatus">waiting…</span></span>
-      </h2>
-
-      <div class="controls" style="margin-bottom:12px;">
-        <div class="left">
-          <select class="select2" id="chartCoin"></select>
-
-          <div class="tabs" role="tablist">
-            <button class="tab active" data-tf="1m" type="button">1M</button>
-            <button class="tab" data-tf="5m" type="button">6M</button>
-            <button class="tab" data-tf="1h" type="button">1Y</button>
-          </div>
-
-          <div class="tabs" role="tablist" title="24h OHLC interval">
-            <button class="tab active" data-ohlc="1m" type="button">OHLC 1D</button>
-            <button class="tab" data-ohlc="5m" type="button">OHLC 1W</button>
-            <button class="tab" data-ohlc="15m" type="button">OHLC 1M</button>
-          </div>
-        </div>
-
-        <div class="right">
-          <span class="muted">Line chart = rolling window; OHLC = 24h candles (server DB).</span>
-        </div>
-      </div>
-
-      <div class="chartWrap">
-        <canvas id="priceChart" height="120"></canvas>
-      </div>
-
-      <div class="muted" style="margin-top:10px;">
-        Tip: Switching timeframe requests new series from server over WebSocket.
-      </div>
-    </section>
-
     <section class="card" id="time" style="margin-top:14px;">
       <h2>
         <span>🕒 World Timezones</span>
@@ -241,7 +202,7 @@
     </section>
 
     <footer>
-      © <span id="year"></span> W3TIGERDOG · WebSocket + SQLite + Chart.js<br/>
+      © <span id="year"></span> W3TIGERDOG · WebSocket + SQLite<br/>
       Deployed on Render.
     </footer>
   </div>
@@ -298,10 +259,6 @@
     const elApiText = document.getElementById("apiText");
     const elUpdText = document.getElementById("updText");
 
-    const elDotChart = document.getElementById("dotChart");
-    const elChartStatus = document.getElementById("chartStatus");
-
-    const elChartCoin = document.getElementById("chartCoin");
     const elGainersList = document.getElementById("gainersList");
 
     const elLocalTz = document.getElementById("localTz");
@@ -316,11 +273,6 @@
       if(mode === "ok") el.classList.add("live");
       else if(mode === "warn") el.classList.add("warn");
       else if(mode === "bad") el.classList.add("bad");
-    }
-    function nowHMSS(){
-      return new Intl.DateTimeFormat("en-GB", {
-        hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit"
-      }).format(new Date());
     }
     function moneyUSD(n){
       if (n == null || !Number.isFinite(n)) return "—";
@@ -564,24 +516,6 @@ document.querySelector(".worldMapImg")?.addEventListener("load", updateDayNight)
     let COINS = [];
     let latest = null;
 
-    const CHART_ASSETS = [
-      { id: "^spx",  symbol: "SPX",  name: "S&P 500" },
-      { id: "^ndx",  symbol: "NDX",  name: "Nasdaq 100" },
-      { id: "^dji",  symbol: "DJI",  name: "Dow Jones" },
-      { id: "^rut",  symbol: "RUT",  name: "Russell 2000" },
-      { id: "^vix",  symbol: "VIX",  name: "VIX" },
-      { id: "^dax",  symbol: "DAX",  name: "DAX" },
-      { id: "^ftse", symbol: "FTSE", name: "FTSE 100" },
-      { id: "^n225", symbol: "N225", name: "Nikkei 225" },
-      { id: "^hsi",  symbol: "HSI",  name: "Hang Seng" }
-    ];
-
-    let chart = null;
-    let currentTF = "1m";
-    let currentCoin = "^spx";
-    let currentOHLC = "5m";
-    let showOHLC = false;
-
     function connectWS(){
       setDot(elDotPrice, "warn");
       elPriceStatus.textContent = "connecting…";
@@ -594,9 +528,6 @@ document.querySelector(".worldMapImg")?.addEventListener("load", updateDayNight)
         setDot(elDotPrice, "ok");
         elPriceStatus.textContent = "connected";
 
-        fillCoinSelect();
-        requestSeries(currentCoin, currentTF);
-        requestOHLC(currentCoin, currentOHLC);
       };
 
       ws.onclose = () => {
@@ -626,40 +557,7 @@ document.querySelector(".worldMapImg")?.addEventListener("load", updateDayNight)
           renderGainers(msg.payload?.gainers || []);
         }
 
-        if(msg.type === "series"){
-          const { coin, tf, series } = msg.payload;
-          if(coin === currentCoin && tf === currentTF && !showOHLC){
-            renderChartLine(series, coin, tf);
-          }
-        }
-
-        if(msg.type === "ohlc"){
-          const { coin, interval, candles } = msg.payload;
-          if(coin === currentCoin && interval === currentOHLC && showOHLC){
-            const series = candles.map(c => ({ t: c.t, v: c.c }));
-            renderChartLine(series, coin, "24h OHLC " + interval);
-          }
-        }
       };
-    }
-
-    function wsSend(obj){
-      if(!ws || ws.readyState !== 1) return;
-      ws.send(JSON.stringify(obj));
-    }
-
-    function requestSeries(coin, tf){
-      showOHLC = false;
-      setDot(elDotChart, "warn");
-      elChartStatus.textContent = "loading series…";
-      wsSend({ type: "get_series", coin, tf });
-    }
-
-    function requestOHLC(coin, interval){
-      showOHLC = true;
-      setDot(elDotChart, "warn");
-      elChartStatus.textContent = "loading OHLC…";
-      wsSend({ type: "get_ohlc", coin, interval });
     }
 
     function renderPrices(payload){
@@ -723,80 +621,6 @@ document.querySelector(".worldMapImg")?.addEventListener("load", updateDayNight)
         `;
       }).join("");
     }
-
-    function fillCoinSelect(){
-      elChartCoin.innerHTML = CHART_ASSETS
-        .map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.symbol)} · ${escapeHtml(a.name)}</option>`)
-        .join("");
-      elChartCoin.value = currentCoin;
-    }
-
-    function ensureChart(){
-      if(chart) return chart;
-      const ctx = document.getElementById("priceChart").getContext("2d");
-      chart = new Chart(ctx, {
-        type: "line",
-        data: { labels: [], datasets: [{ label: "Price", data: [], borderWidth: 2, pointRadius: 0, tension: 0.25 }] },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: { legend: { display: true } },
-          scales: {
-            x: { ticks: { maxTicksLimit: 10 } },
-            y: { type: "linear", beginAtZero: false, ticks: { maxTicksLimit: 6 } }
-          }
-        }
-      });
-      return chart;
-    }
-
-    function renderChartLine(series, coin, label){
-      const c = ensureChart();
-      const labels = series.map(p => {
-        const d = new Date(p.t);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-      });
-      const data = series.map(p => Number(p.v)).filter(n => Number.isFinite(n));
-
-      c.data.labels = labels;
-      c.data.datasets[0].data = data;
-
-      const coinMeta = CHART_ASSETS.find(x => x.id === coin);
-      const coinLabel = coinMeta ? `${coinMeta.symbol} · ${coinMeta.name}` : coin;
-      c.data.datasets[0].label = `${coinLabel} · ${label}`;
-
-      c.update("none");
-      setDot(elDotChart, "ok");
-      elChartStatus.textContent = "updated " + nowHMSS();
-    }
-
-    document.querySelectorAll(".tab[data-tf]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab[data-tf]").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentTF = btn.getAttribute("data-tf");
-        requestSeries(currentCoin, currentTF);
-      });
-    });
-
-    document.querySelectorAll(".tab[data-ohlc]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab[data-ohlc]").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentOHLC = btn.getAttribute("data-ohlc");
-        requestOHLC(currentCoin, currentOHLC);
-      });
-    });
-
-    elChartCoin.addEventListener("change", () => {
-      currentCoin = elChartCoin.value;
-      if(showOHLC) requestOHLC(currentCoin, currentOHLC);
-      else requestSeries(currentCoin, currentTF);
-    });
 
     const canvas = document.getElementById("particles");
     const pctx = canvas.getContext("2d", { alpha: true });

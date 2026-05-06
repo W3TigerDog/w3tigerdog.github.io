@@ -38,94 +38,6 @@ const BASE_FETCH_MS = 20_000;
 // 429/错误时最大退避到 5 分钟
 const MAX_BACKOFF_MS = 300_000;
 
-// ---------- STOCK INDICES (Chart only, via Stooq daily) ----------
-const INDEX_ASSETS = [
-  { id: "^spx",  symbol: "SPX",  name: "S&P 500" },
-  { id: "^ndx",  symbol: "NDX",  name: "Nasdaq 100" },
-  { id: "^dji",  symbol: "DJI",  name: "Dow Jones" },
-  { id: "^rut",  symbol: "RUT",  name: "Russell 2000" },
-  { id: "^vix",  symbol: "VIX",  name: "VIX" },
-  { id: "^dax",  symbol: "DAX",  name: "DAX" },
-  { id: "^ftse", symbol: "FTSE", name: "FTSE 100" },
-  { id: "^n225", symbol: "N225", name: "Nikkei 225" },
-  { id: "^hsi",  symbol: "HSI",  name: "Hang Seng" }
-];
-
-function isIndexCoin(coin) {
-  const c = String(coin || "");
-  return c.startsWith("^") || INDEX_ASSETS.some(x => x.id === c);
-}
-
-// 简单缓存，避免每次切换都打 Stooq
-const indexCache = new Map(); // coin -> { ts, rows }
-const INDEX_CACHE_TTL_MS = 60_000;
-
-async function fetchStooqDailyRows(symbol) {
-  const coin = String(symbol || "");
-  const now = Date.now();
-
-  const cached = indexCache.get(coin);
-  if (cached && (now - cached.ts) < INDEX_CACHE_TTL_MS) return cached.rows;
-
-  const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(coin)}&i=d`;
-  const res = await fetch(url, { headers: { accept: "text/csv" } });
-  if (!res.ok) throw new Error(`stooq HTTP ${res.status}`);
-
-  const csv = await res.text();
-  const lines = csv.trim().split("\n");
-  const rows = lines
-    .slice(1)
-    .map(l => l.split(","))
-    .filter(r => r.length >= 5);
-
-  const out = rows
-    .map(r => {
-      const t = Date.parse(r[0] + "T00:00:00Z");
-      return { t, o: Number(r[1]), h: Number(r[2]), l: Number(r[3]), c: Number(r[4]) };
-    })
-    .filter(x => Number.isFinite(x.t) && Number.isFinite(x.c));
-
-  indexCache.set(coin, { ts: now, rows: out });
-  return out;
-}
-
-function seriesFromDaily(rows, days) {
-  const end = Date.now();
-  const start = end - days * 24 * 60 * 60 * 1000;
-  return rows.filter(r => r.t >= start && r.t <= end).map(r => ({ t: r.t, v: r.c }));
-}
-
-function bucketKey(t, mode) {
-  const d = new Date(t);
-  const y = d.getUTCFullYear();
-  const day = d.getUTCDate();
-
-  if (mode === "1w") {
-    const dt = new Date(Date.UTC(y, d.getUTCMonth(), day));
-    const wd = dt.getUTCDay() || 7;
-    dt.setUTCDate(dt.getUTCDate() - (wd - 1));
-    return dt.getTime();
-  }
-
-  if (mode === "1mo") return Date.UTC(y, d.getUTCMonth(), 1);
-  return Date.UTC(y, d.getUTCMonth(), day);
-}
-
-function ohlcFromDaily(rows, mode) {
-  const map = new Map();
-  for (const r of rows) {
-    const k = bucketKey(r.t, mode);
-    const cur = map.get(k);
-    if (!cur) map.set(k, { t: k, o: r.o, h: r.h, l: r.l, c: r.c });
-    else {
-      cur.h = Math.max(cur.h, r.h);
-      cur.l = Math.min(cur.l, r.l);
-      cur.c = r.c;
-    }
-  }
-  return [...map.values()].sort((a, b) => a.t - b.t);
-}
-
 // ---------- DB (SQLite) ----------
 const dataDir = path.join(__dirname, "data");
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -246,55 +158,6 @@ async function fetchCoinGecko() {
 }
 
 // ---------- Aggregations ----------
-function roundTo(n, stepMs) { return Math.floor(n / stepMs) * stepMs; }
-
-async function getSeries(coin, windowMs, bucketMs) {
-  const end = nowMs();
-  const start = end - windowMs;
-
-  const rows = await db.all(
-    "SELECT ts, price FROM ticks WHERE coin=? AND ts>=? AND ts<=? ORDER BY ts ASC",
-    [coin, start, end]
-  );
-
-  const map = new Map();
-  for (const r of rows) map.set(roundTo(r.ts, bucketMs), r.price);
-
-  const points = [];
-  const firstBucket = roundTo(start, bucketMs);
-  const lastBucket = roundTo(end, bucketMs);
-
-  let last = null;
-  for (let t = firstBucket; t <= lastBucket; t += bucketMs) {
-    if (map.has(t)) last = map.get(t);
-    if (last !== null) points.push({ t, v: last });
-  }
-  return points;
-}
-
-async function getOHLC(coin, intervalMs) {
-  const end = nowMs();
-  const start = end - 24 * 60 * 60 * 1000;
-
-  const rows = await db.all(
-    "SELECT ts, price FROM ticks WHERE coin=? AND ts>=? AND ts<=? ORDER BY ts ASC",
-    [coin, start, end]
-  );
-
-  const buckets = new Map();
-  for (const r of rows) {
-    const b = roundTo(r.ts, intervalMs);
-    const cur = buckets.get(b);
-    if (!cur) buckets.set(b, { t: b, o: r.price, h: r.price, l: r.price, c: r.price });
-    else {
-      cur.h = Math.max(cur.h, r.price);
-      cur.l = Math.min(cur.l, r.price);
-      cur.c = r.price;
-    }
-  }
-  return [...buckets.values()].sort((a, b) => a.t - b.t);
-}
-
 async function getTopGainers(limit = 10) {
   const end = nowMs();
   const start = end - 24 * 60 * 60 * 1000;
@@ -320,44 +183,6 @@ async function getTopGainers(limit = 10) {
   return gainers.slice(0, limit);
 }
 
-// ---------- API endpoints (optional debug) ----------
-app.get("/api/series", async (req, res) => {
-  const coin = String(req.query.coin || "bitcoin");
-  const tf = String(req.query.tf || "1m");
-
-  if (isIndexCoin(coin)) {
-    const days = tf === "5m" ? 180 : tf === "1h" ? 365 : 30;
-    const rows = await fetchStooqDailyRows(coin);
-    const series = seriesFromDaily(rows, days);
-    return res.json({ coin, tf, series, source: "stooq" });
-  }
-
-  const map = {
-    "1m": { windowMs: 60_000, bucketMs: 1_000 },
-    "5m": { windowMs: 300_000, bucketMs: 5_000 },
-    "1h": { windowMs: 3_600_000, bucketMs: 60_000 }
-  };
-  const cfg = map[tf] || map["1m"];
-  const series = await getSeries(coin, cfg.windowMs, cfg.bucketMs);
-  res.json({ coin, tf, series, source: "sqlite" });
-});
-
-app.get("/api/ohlc", async (req, res) => {
-  const coin = String(req.query.coin || "bitcoin");
-  const interval = String(req.query.interval || "5m");
-
-  if (isIndexCoin(coin)) {
-    const mode = interval === "1m" ? "1d" : interval === "15m" ? "1mo" : "1w";
-    const rows = await fetchStooqDailyRows(coin);
-    const candles = ohlcFromDaily(rows, mode);
-    return res.json({ coin, interval, candles, source: "stooq" });
-  }
-
-  const intervalMs = interval === "1m" ? 60_000 : interval === "15m" ? 900_000 : 300_000;
-  const candles = await getOHLC(coin, intervalMs);
-  res.json({ coin, interval, candles, source: "sqlite" });
-});
-
 app.get("/api/gainers", async (req, res) => {
   const limit = Math.max(1, Math.min(50, Number(req.query.limit || 10)));
   const gainers = await getTopGainers(limit);
@@ -373,71 +198,6 @@ wss.on("connection", async (ws) => {
 
   const gainers = await getTopGainers(8);
   ws.send(JSON.stringify({ type: "gainers", payload: { ts: nowMs(), gainers } }));
-
-  const defaultCoin = "bitcoin";
-  const s1m = await getSeries(defaultCoin, 60_000, 1_000);
-  const s5m = await getSeries(defaultCoin, 300_000, 5_000);
-  const s1h = await getSeries(defaultCoin, 3_600_000, 60_000);
-  ws.send(JSON.stringify({
-    type: "series_init",
-    payload: { coin: defaultCoin, series: { "1m": s1m, "5m": s5m, "1h": s1h } }
-  }));
-
-  ws.on("message", async (buf) => {
-    let msg;
-    try { msg = JSON.parse(buf.toString("utf8")); } catch { return; }
-
-    if (msg?.type === "get_series") {
-      const coin = String(msg.coin || "bitcoin");
-      const tf = String(msg.tf || "1m");
-
-      if (isIndexCoin(coin)) {
-        const days = tf === "5m" ? 180 : tf === "1h" ? 365 : 30;
-        try {
-          const rows = await fetchStooqDailyRows(coin);
-          const series = seriesFromDaily(rows, days);
-          ws.send(JSON.stringify({ type: "series", payload: { coin, tf, series } }));
-        } catch (e) {
-          ws.send(JSON.stringify({ type: "series", payload: { coin, tf, series: [], error: String(e?.message || e) } }));
-        }
-        return;
-      }
-
-      const cfg =
-        tf === "5m" ? { windowMs: 300_000, bucketMs: 5_000 } :
-        tf === "1h" ? { windowMs: 3_600_000, bucketMs: 60_000 } :
-                      { windowMs: 60_000, bucketMs: 1_000 };
-
-      const series = await getSeries(coin, cfg.windowMs, cfg.bucketMs);
-      ws.send(JSON.stringify({ type: "series", payload: { coin, tf, series } }));
-      return;
-    }
-
-    if (msg?.type === "get_ohlc") {
-      const coin = String(msg.coin || "bitcoin");
-      const interval = String(msg.interval || "5m");
-
-      if (isIndexCoin(coin)) {
-        const mode = interval === "1m" ? "1d" : interval === "15m" ? "1mo" : "1w";
-        try {
-          const rows = await fetchStooqDailyRows(coin);
-          const candlesAll = ohlcFromDaily(rows, mode);
-          const cutoff = Date.now() - 730 * 24 * 60 * 60 * 1000;
-          const candles = candlesAll.filter(c => c.t >= cutoff);
-
-          ws.send(JSON.stringify({ type: "ohlc", payload: { coin, interval, candles } }));
-        } catch (e) {
-          ws.send(JSON.stringify({ type: "ohlc", payload: { coin, interval, candles: [], error: String(e?.message || e) } }));
-        }
-        return;
-      }
-
-      const intervalMs = interval === "1m" ? 60_000 : interval === "15m" ? 900_000 : 300_000;
-      const candles = await getOHLC(coin, intervalMs);
-      ws.send(JSON.stringify({ type: "ohlc", payload: { coin, interval, candles } }));
-      return;
-    }
-  });
 });
 
 

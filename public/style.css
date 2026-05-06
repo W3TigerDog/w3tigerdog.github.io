@@ -402,48 +402,6 @@ thead th{
   gap:10px;
 }
 
-.controls{
-  display:flex;
-  justify-content:space-between;
-  gap: 10px;
-  flex-wrap:wrap;
-}
-
-.tabs{
-  display:flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tab{
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(2,6,23,.55);
-  color:#e2e8f0;
-  padding: 8px 10px;
-  border-radius: 999px;
-  cursor:pointer;
-  font-weight: 800;
-  font-size: 12px;
-}
-
-.tab.active{
-  border-color: rgba(34,211,238,.35);
-  box-shadow: 0 0 16px rgba(34,211,238,.18);
-}
-
-.select2{
-  padding: 10px 12px;
-  border-radius: 12px;
-}
-
-.chartWrap{
-  height: 300px;
-  border-radius: 16px;
-  overflow:hidden;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(2,6,23,.35);
-}
-
 footer{
   margin-top: 18px;
   text-align:center;
